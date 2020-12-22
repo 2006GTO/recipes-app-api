@@ -14,7 +14,11 @@ class BaseRecipeAttrViewSet(viewsets.GenericViewSet,
     permission_classes = (IsAuthenticated,)
     
     def get_queryset(self):
-        return self.queryset.filter(user=self.request.user).order_by('-name')
+        assigned_only = bool(int(self.request.query_params.get('assigned_only')))
+        queryset = self.queryset
+        if assigned_only:
+            queryset = queryset.filter(recipe__isnull=False)
+        return queryset.filter(user=self.request.user).order_by('-name')
 
 
     def perform_create(self, serializer):
@@ -51,7 +55,7 @@ class RecipeViewSet(viewsets.ModelViewSet):
         if ingredients:
             ingredient_ids = self._params_to_ints(ingredients)
             queryset = queryset.filter(ingredients__id__in=ingredient_ids)
-        return self.queryset.filter(user=self.request.user)
+        return queryset.filter(user=self.request.user)
     
     
     def get_serializer_class(self):
